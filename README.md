@@ -1,101 +1,100 @@
-Take-Home Project: AI-Powered Alcohol Label Verification App
-Project Background & Stakeholder Context
-The following document contains notes from our discovery sessions with the Compliance Division, along with technical requirements for the prototype. We've included stakeholder feedback to give you context on how this tool will be used.
+# Label Check — AI-Powered Alcohol Label Verification
 
-Interview Notes: Sarah Chen, Deputy Director of Label Compliance
-Conducted Tuesday, 3:15 PM — Sarah was running late from her daughter's school play rehearsal
+Label Check is a standalone prototype for TTB compliance agents. An agent uploads
+one or more alcohol-label images, enters the available application data, and reviews
+clear field-by-field findings. The app recommends a result; the compliance agent
+always makes the final determination.
 
-"Thanks for meeting with me. Sorry about the delay—my daughter's playing the lead in her school's production of Annienext week and rehearsals have been crazy. Anyway, let me tell you about what we're dealing with here.
+The original challenge brief is preserved in [ASSIGNMENT.md](ASSIGNMENT.md).
+See [docs/WORKFLOW.md](docs/WORKFLOW.md) for the program sequence diagrams and data flow.
 
-So the TTB reviews about 150,000 label applications a year. Our team of 47 agents handles all of them. Back in the 80s—before my time—they actually had over 100 agents, but budget cuts, you know how it goes. We've been doing things basically the same way since the COLA system went online in 2003. That was a big upgrade from paper forms, believe it or not.
+## What it does
 
-The actual review process is pretty straightforward. An agent pulls up an application, looks at the label artwork, and checks that what's on the label matches what's in the application. Brand name matches? Check. ABV is correct? Check. Government warning is there? Check. It takes maybe 5-10 minutes per application for a simple one, longer if there are issues.
+- **Single label mode:** accepts one label image and its application details.
+- **Batch CSV mode:** pairs one CSV row per application with label images that share
+  the row's `filename`; each item keeps its own application details and result.
+- Extracts visible label evidence with a single OpenAI vision request per image.
+- Compares brand, class/type, alcohol content, net contents, producer, and country
+  of origin against optional application values.
+- Checks the government-warning wording exactly and flags uncertain header formatting
+  for human review.
+- Returns **Pass**, **Needs review**, or **Mismatch** with plain-language reasons.
+- Processes batch work with three concurrent browser-side requests; failed images do
+  not prevent other results from being returned or exported.
 
-Here's the thing though—and this is what got leadership interested in AI—a lot of what we do is just... matching. Like literally just making sure the number on the form is the same as the number on the label. My agents spend half their day doing what's essentially data entry verification. It's not that they can't do more complex analysis, it's that they're drowning in routine stuff.
+## Bundled samples
 
-Oh, I should mention—we tried a pilot with the scanning vendor last year. Disaster. The system would take 30, 40 seconds sometimes to process a single label. Our agents just went back to doing it by eye because they could do five labels in the time it took the machine to do one. If we can't get results back in about 5 seconds, nobody's going to use it. We learned that the hard way.
+Choose a sample from the single-label **Sample data** dropdown to populate the form
+and load its label artwork automatically. In batch mode, choose **Load bundled sample
+batch** to load six fictional labels and `applications.csv` from `public/samples/`.
+You can also download a CSV template directly from the batch workflow.
 
-What else... The agents really vary in their tech comfort level. Dave's been here since the Clinton administration and still prints his emails. Meanwhile, Jenny's fresh out of college and probably could have built this tool herself. We need something my mother could figure out—she's 73 and just learned to video call her grandkids last year, if that gives you a benchmark. Half our team is over 50. Clean, obvious, no hunting for buttons.
+## Design
 
-One more thing that came up in our last team meeting—during peak season, we get these big importers who dump 200, 300 label applications on us at once. Right now we literally have to process them one at a time. If there was some way to handle batch uploads, that would be huge. Janet from our Seattle office has been asking about this for years."
+The model extracts what it sees; deterministic TypeScript code assigns the result.
+This prevents a model from silently correcting the very wording and values being
+verified. Low-confidence or visually uncertain evidence is routed to **Needs review**.
 
-Interview Notes: Marcus Williams, IT Systems Administrator
-Coffee chat, Thursday morning
+Uploads and results are request-scoped. The prototype has no database, authentication,
+COLA integration, or automatic approval/rejection behavior.
 
-"Sarah probably gave you the business side. Let me fill you in on some of the technical landscape.
+### Regulatory scope
 
-Our current infrastructure is... well, it's government infrastructure, let's leave it at that. We're on Azure now after the migration in 2019. That was a whole thing—don't get me started on the FedRAMP certification process. Took 18 months just for the paperwork.
+This is a **distilled-spirits review assistant**, not a compliance-certification
+system. It checks application-to-label values, the health-warning wording/format, and
+the basic alcohol-content notation. It does not determine physical type size, contrast,
+continuous-paragraph placement, the same-field-of-vision requirement, formula-based
+statements, or whether a country-of-origin statement is required for a particular
+import. Those remain explicit human-review decisions.
 
-The COLA system is built on .NET, though there's been talk about modernizing it for years. We had a contractor come in last summer to do an assessment and they quoted us $4.2 million for a full rebuild. That went nowhere, obviously.
+## Local setup
 
-For this prototype, we're not looking to integrate with COLA directly—that's a whole different beast with its own authorization requirements. Think of this as a standalone proof-of-concept that could potentially inform future procurement decisions. If it works well, maybe we look at how to incorporate it into the workflow. But that's years away, realistically.
+Requires Node.js 20+ and a regular OpenAI API key. This project uses the OpenAI API
+directly—there is no Azure endpoint, deployment name, or Azure-specific credential to
+configure.
 
-Security-wise, we'd need to be careful with any production deployment—there's PII considerations, document retention policies, the usual federal compliance stuff. But for a prototype? Just don't do anything crazy. We're not storing anything sensitive for this exercise.
+```bash
+npm install
+cp .env.example .env.local
+# Set OPENAI_API_KEY in .env.local
+npm run dev
+```
 
-Oh, and our network blocks outbound traffic to a lot of domains, so keep that in mind if you're thinking about cloud APIs. During the scanning vendor pilot, half their features didn't work because our firewall blocked connections to their ML endpoints. Classic."
+Open <http://localhost:3000>. Keep `.env.local` local; it is ignored by Git.
 
-Interview Notes: Dave Morrison, Senior Compliance Agent (28 years)
-Brief hallway conversation
+### Configuration
 
-"Look, I'll be honest, I've seen a lot of these 'modernization' projects come and go. Remember the automated phone system they put in back in 2008? Supposed to reduce call volume. We ended up with more calls because nobody could figure out how to navigate it.
+| Variable | Required | Description |
+|---|---:|---|
+| `OPENAI_API_KEY` | Yes | Regular OpenAI API key used only by the server-side extraction route. |
+| `OPENAI_MODEL` | No | Vision-capable model; defaults to `gpt-4o-mini`. |
 
-The thing about label review is there's nuance. You can't just pattern match everything. Like, I had one last week where the brand name was 'STONE'S THROW' on the label but 'Stone's Throw' in the application. Technically a mismatch? Sure. But it's obviously the same thing. You need judgment.
+The browser never receives the API key. It sends uploaded images to the Next.js API
+route, which sends the vision request from the server.
 
-That said, I'm not against new tools. If something can help me get through my queue faster, great. Just don't make my life harder in the process. I spend enough time fighting with COLA as it is."
+## Quality checks
 
-Interview Notes: Jenny Park, Junior Compliance Agent (8 months)
-Teams call, Friday afternoon
+```bash
+npm run lint
+npm test
+npm run build
+```
 
-"I'm so excited you're working on this! When I started here, I was kind of shocked at how manual everything is. Like, I literally have a printed checklist on my desk that I go through for every label. Brand name—check with my eyes. ABV—check with my eyes. Warning statement—check with my eyes. It's 2024!
+The Vitest suite covers every bundled fixture outcome, field and warning validation,
+CSV parsing/export, extraction-schema normalization, and the `/api/reviews` request
+contract (success, invalid input, file limits, batch isolation, and provider errors).
 
-The one thing I'd say is the warning statement check is actually trickier than it sounds. It has to be exact. Like, word-for-word, and the 'GOVERNMENT WARNING:' part has to be in all caps and bold. Sarah probably mentioned this but people try to get creative with the warning all the time. Smaller font, different wording, burying it in tiny text. I caught one last month where they used 'Government Warning' in title case instead of all caps. Rejected.
+## Deployment
 
-Also—and this is maybe out of scope for a prototype—but it would be amazing if the tool could handle images that aren't perfectly shot. I've seen labels that are photographed at weird angles, or the lighting is bad, or there's glare on the bottle. Right now if an agent can't read the label they just reject it and ask for a better image. But if AI could handle some of that..."
+The included [Dockerfile](Dockerfile) creates a production container listening on
+port `3000`. Set `OPENAI_API_KEY` and, optionally, `OPENAI_MODEL` as deployment
+environment variables or secrets. Do not commit those values.
 
-Technical Requirements
-You are free to use any programming languages, frameworks, or libraries you prefer. We want to see what kind of engineering, design, and integration decisions you make.
+## Limitations
 
-Additional Context
-About TTB Label Requirements
-For reference, TTB requires specific information on alcohol beverage labels. The exact requirements vary by beverage type (beer, wine, distilled spirits) but common elements include:
-
-Brand name
-Class/type designation
-Alcohol content (with some exceptions for certain wine/beer)
-Net contents
-Name and address of bottler/producer
-Country of origin for imports
-Government Health Warning Statement (mandatory on all alcohol beverages)
-We encourage you to review TTB's guidelines at ttb.gov for additional context on label requirements.
-
-Sample Label
-Your app should handle labels containing information like the example below:
-
-Example Distilled Spirits Label Fields:
-
-Brand Name: "OLD TOM DISTILLERY"
-Class/Type: "Kentucky Straight Bourbon Whiskey"
-Alcohol Content: "45% Alc./Vol. (90 Proof)"
-Net Contents: "750 mL"
-Government Warning: [Standard government warning text]
-We encourage you to create or source additional test labels—AI image generation tools work well for this.
-
-Deliverables
-Source Code Repository (GitHub or similar)
-All source code
-README with setup and run instructions
-Brief documentation of approach, tools used, assumptions made
-Deployed Application URL
-Working prototype we can access and test
-Evaluation Criteria
-Correctness and completeness of core requirements
-Code quality and organization
-Appropriate technical choices for the scope
-User experience and error handling
-Attention to requirements
-Creative problem-solving
-We understand this is time-constrained. A working core application with clean code is preferred over ambitious but incomplete features. Document any trade-offs or limitations.
-
-Questions? Reach out for clarification—though we also value how you fill in gaps independently.
-
-Good luck!
+- The MVP focuses on common distilled-spirits fields and does not determine every
+  beverage-specific regulatory requirement.
+- Font-size, contrast, placement, and layout requirements cannot be measured reliably
+  from an uncalibrated label photograph.
+- Warning-header bold detection is best-effort visual evidence and is never an
+  automatic rejection.

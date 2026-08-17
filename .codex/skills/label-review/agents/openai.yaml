@@ -1,0 +1,4 @@
+interface:
+  display_name: "Label Review"
+  short_description: "Review alcohol-label extraction and validation safely."
+  default_prompt: "Use $label-review to implement or revise alcohol label validation."
