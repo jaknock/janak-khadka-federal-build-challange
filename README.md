@@ -60,7 +60,8 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open <http://localhost:3000>. Keep `.env.local` local; it is ignored by Git.
+Open <http://localhost:3000>. To use another port locally, run, for example,
+`npm run dev -- --port 3003`. Keep `.env.local` local; it is ignored by Git.
 
 ### Configuration
 
@@ -86,9 +87,13 @@ contract (success, invalid input, file limits, batch isolation, and provider err
 
 ## Deployment
 
-The included [Dockerfile](Dockerfile) creates a production container listening on
-port `3000`. Set `OPENAI_API_KEY` and, optionally, `OPENAI_MODEL` as deployment
-environment variables or secrets. Do not commit those values.
+The production application is available at:
+[janak-khadka-federal-build-challeng.vercel.app](https://janak-khadka-federal-build-challeng.vercel.app).
+
+For Vercel, configure `OPENAI_API_KEY` and, optionally, `OPENAI_MODEL` as
+Production environment variables, then deploy with `vercel deploy --prod`. Do not
+commit those values. The included [Dockerfile](Dockerfile) is available for other
+hosting platforms and listens on port `3000`.
 
 ## Limitations
 
