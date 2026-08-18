@@ -1,7 +1,7 @@
 filename,brand_name,class_type,alcohol_content,net_contents
 old-tom-pass.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45%,750 mL
-stones-throw-case.png,Stone's Throw,Straight Rye Whiskey,45%,750 mL
-title-case-warning.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45%,750 mL
-reworded-warning.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45%,750 mL
-missing-warning.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45%,750 mL
-wrong-abv.png,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,45%,750 mL
+stones-throw-case.png,Stone's Throw,Straight Rye Whiskey,47% Alc./Vol. (94 Proof),700 mL
+title-case-warning.png,CEDAR HOLLOW DISTILLING,American Single Malt Whiskey,46% Alc./Vol. (92 Proof),700 mL
+reworded-warning.png,HARBOR & FIELD SPIRITS,Straight Bourbon Whiskey,43% Alc./Vol. (86 Proof),750 mL
+missing-warning.png,JUNIPER TRAIL DISTILLERS,Small Batch Rye Whiskey,50% Alc./Vol. (100 Proof),1L
+wrong-abv.png,NORTHSTAR BARREL HOUSE,Tennessee Whiskey,42% Alc./Vol. (84 Proof),1L

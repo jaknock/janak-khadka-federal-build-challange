@@ -1,7 +1,7 @@
 # Label Check — AI-Powered Alcohol Label Verification
 
-Label Check is a standalone prototype for TTB compliance agents. An agent uploads
-one or more alcohol-label images, enters the available application data, and reviews
+Label Check is a standalone prototype for TTB compliance agents. An agent can open a
+mock notification inbox, upload a single label, or upload a CSV batch, then review
 clear field-by-field findings. The app recommends a result; the compliance agent
 always makes the final determination.
 
@@ -12,24 +12,27 @@ technology stack.
 
 ## What it does
 
-- **Single label mode:** accepts one label image and its application details.
-- **Batch CSV mode:** pairs one CSV row per application with label images that share
-  the row's `filename`; each item keeps its own application details and result.
+- **Mock review inbox:** opens with six fictional label-review notifications sourced
+  from a server-owned mock database.
+- **One-click batch verification:** checks every pending label with its matching
+  stored application data and bundled artwork; no browser file selection is needed.
+- **Single-label upload:** accepts one label image and its application details.
+- **CSV batch upload:** pairs application rows with uploaded label images whose
+  filenames match the CSV rows.
 - Extracts visible label evidence with a single OpenAI vision request per image.
 - Compares brand, class/type, alcohol content, net contents, producer, and country
   of origin against optional application values.
 - Checks the government-warning wording exactly and flags uncertain header formatting
   for human review.
 - Returns **Pass**, **Needs review**, or **Mismatch** with plain-language reasons.
-- Processes batch work with three concurrent browser-side requests; failed images do
-  not prevent other results from being returned or exported.
+- Processes mock and uploaded batches with bounded concurrency; a failed label does
+  not prevent the remaining results from being returned.
 
 ## Bundled samples
 
-Choose a sample from the single-label **Sample data** dropdown to populate the form
-and load its label artwork automatically. In batch mode, choose **Load bundled sample
-batch** to load six fictional labels and `applications.csv` from `public/samples/`.
-You can also download a CSV template directly from the batch workflow.
+The seeded review inbox contains six fictional labels and their application data.
+Selecting **Verify 6 labels** runs the entire pending queue. The queue is mock data,
+so refreshing the page restores its six pending notifications.
 
 ## Design
 
@@ -37,8 +40,9 @@ The model extracts what it sees; deterministic TypeScript code assigns the resul
 This prevents a model from silently correcting the very wording and values being
 verified. Low-confidence or visually uncertain evidence is routed to **Needs review**.
 
-Uploads and results are request-scoped. The prototype has no database, authentication,
-COLA integration, or automatic approval/rejection behavior.
+The mock database is bundled server-side for this prototype. Verification results are
+request-scoped and the queue state is browser-only; nothing is persisted after refresh.
+There is no authentication, COLA integration, or automatic approval/rejection behavior.
 
 ### Regulatory scope
 
@@ -72,8 +76,9 @@ Open <http://localhost:3000>. To use another port locally, run, for example,
 | `OPENAI_API_KEY` | Yes | Regular OpenAI API key used only by the server-side extraction route. |
 | `OPENAI_MODEL` | No | Vision-capable model; defaults to `gpt-4o-mini`. |
 
-The browser never receives the API key. It sends uploaded images to the Next.js API
-route, which sends the vision request from the server.
+The browser never receives the API key. For inbox work it sends pending mock-review
+IDs and the route loads label artwork on the server. For manual review it sends the
+chosen image to the Next.js API route, which calls the vision model from the server.
 
 ## Quality checks
 
@@ -84,8 +89,8 @@ npm run build
 ```
 
 The Vitest suite covers every bundled fixture outcome, field and warning validation,
-CSV parsing/export, extraction-schema normalization, and the `/api/reviews` request
-contract (success, invalid input, file limits, batch isolation, and provider errors).
+extraction-schema normalization, the six-record mock queue, notification endpoint,
+and batch-review request contract.
 
 ## Deployment
 
