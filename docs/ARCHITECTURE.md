@@ -3,7 +3,7 @@
 Label Check is a server-rendered Next.js application with a mock review inbox and
 manual single-label/CSV-batch upload paths. It uses an OpenAI vision model only to
 extract visible label evidence; the server-side validation engine deterministically
-assigns the recommendation. Six fictional records are seeded in a server-owned mock
+assigns the recommendation. Eight fictional records are seeded in a server-owned mock
 database and are not persistently modified.
 
 ## High-level architecture
@@ -12,7 +12,7 @@ database and are not persistently modified.
 flowchart LR
     Agent[TTB compliance agent]
     Browser[Next.js browser UI\nInbox or manual upload]
-    Queue[Mock review database\nSix fictional applications]
+    Queue[Mock review database\nEight fictional applications]
     Samples[Bundled label artwork\npublic/samples]
     API[Next.js route handler\nPOST /api/reviews/batch]
     Guard[Review-ID validation\nZod request schema]
@@ -35,8 +35,9 @@ flowchart LR
 
 ### Request flow
 
-1. The agent opens the inbox and sees six pending mock notifications.
-2. The agent selects **Verify labels**, and the browser sends the pending review IDs.
+1. The agent opens the inbox and sees eight pending mock notifications.
+2. The agent can open any application underneath the inbox to compare its details
+   beside the label, selects one or more inbox applications, and starts verification.
 3. The API validates the request, retrieves application data from the mock database,
    and reads the corresponding bundled artwork on the server.
 4. The server sends the image to OpenAI with a strict JSON schema to transcribe
@@ -44,10 +45,15 @@ flowchart LR
 5. The validation engine compares that evidence with the application values and
    applies alcohol-content and government-warning rules.
 6. The API returns independent results with field-level explanations. The browser
-   clears the pending count for this session and displays the evidence.
+   displays the evidence and saves mock-inbox results and decisions locally for that
+   browser only.
 
 Batch work is intentionally limited to three concurrent image analyses in the API
-route. A failed image produces an individual error rather than failing the entire batch.
+route. Each result records its server-side time against a five-second response target.
+The vision request may run for 12 seconds, with a 15-second hard timeout, so a slow
+but valid high-detail extraction is returned instead of being cut off at the target.
+A failed or timed-out image produces an individual error rather than failing the
+entire batch.
 
 ## Technology stack
 
@@ -69,8 +75,9 @@ route. A failed image produces an individual error rather than failing the entir
 | Location | Responsibility |
 |---|---|
 | `app/page.tsx` | Server entry point that supplies the seeded pending notifications. |
-| `components/ReviewQueue.tsx` | Notification inbox, one-click batch request, and results display. |
-| `lib/mock-review-queue.ts` | Zod-validated, server-owned mock review data for six fictional labels. |
+| `components/ReviewQueue.tsx` | Selectable notification inbox, in-page side-by-side review, batch verification, and browser-only decisions. |
+| `lib/review-queue-storage.ts` | Zod-validated local-storage format for mock-inbox results, decisions, and rejection reasons. |
+| `lib/mock-review-queue.ts` | Zod-validated, server-owned mock review data for eight fictional labels. |
 | `app/api/reviews/batch/route.ts` | Batch request validation, mock-record lookup, bounded processing, and review response. |
 | `components/SingleLabelReview.tsx` | Application form, one-label upload, and evidence display. |
 | `components/BatchValidation.tsx` | CSV/image pairing, manual batch requests, and CSV export. |
@@ -86,11 +93,15 @@ route. A failed image produces an individual error rather than failing the entir
 - The batch route accepts only known mock review IDs and reads matching bundled PNGs
   on the server.
 - The manual route accepts PNG, JPEG, and WebP uploads, up to 20 files per request
-  and 8 MB per image.
-- Requests, extracted evidence, and results are not persisted by the app; notification
-  completion is browser-only and resets on refresh.
+  and 8 MB per image, and runs at most three extractions simultaneously.
+- Uploaded-label requests and results are not persisted. Mock-inbox extraction
+  evidence, findings, and human Approve/Reject decisions are saved in browser local
+  storage only, never sent back to the server, and are not shared with other users.
 - The application is decision support, not an automatic approval system. Low
   confidence and visual-format uncertainty are returned as **Needs review**.
+- This request-scoped prototype does not include a durable 1,000-job work queue.
+  Production-scale throughput needs persisted jobs, provider rate limiting, retries,
+  and monitoring.
 
 ## Deployment topology
 

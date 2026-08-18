@@ -64,9 +64,23 @@ const queue = [
     application: { brandName: "NORTHSTAR BARREL HOUSE", classType: "Tennessee Whiskey", alcoholContent: "42% Alc./Vol. (84 Proof)", netContents: "1L" },
     notification: { title: "Northstar Barrel House", description: "Label evidence has not yet been extracted." },
   },
+  {
+    id: "review-glare-low-confidence",
+    filename: "glare-low-confidence.png",
+    imagePath: "/samples/glare-low-confidence.png",
+    application: { brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL" },
+    notification: { title: "Old Tom Distillery — warning glare", description: "Label photograph has glare across part of the warning." },
+  },
+  {
+    id: "review-skewed-photo",
+    filename: "skewed-photo.png",
+    imagePath: "/samples/skewed-photo.png",
+    application: { brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL" },
+    notification: { title: "Old Tom Distillery — skewed photo", description: "Label photograph has visible perspective skew." },
+  },
 ] as const;
 
-export const mockReviewQueue = z.array(mockReviewRecordSchema).length(6).parse(queue) as MockReviewRecord[];
+export const mockReviewQueue = z.array(mockReviewRecordSchema).length(8).parse(queue) as MockReviewRecord[];
 
 export function getPendingReviewNotifications() {
   return mockReviewQueue.map(({ id, filename, imagePath, application, notification }) => ({ id, filename, imagePath, application, ...notification }));

@@ -25,6 +25,7 @@ describe("POST /api/reviews", () => {
     const response = await POST(request()); const body = await response.json();
     expect(response.status).toBe(200);
     expect(body.results[0].result.state).toBe("pass");
+    expect(body.results[0].result.elapsedMs).toBeLessThan(5_000);
     expect(extractLabelMock).toHaveBeenCalledOnce();
   });
   it("rejects a request with no labels", async () => {
@@ -68,5 +69,20 @@ describe("POST /api/reviews", () => {
     expect(body.results).toHaveLength(2);
     expect(body.results.map((item: { result: { state: string } }) => item.result.state)).toEqual(["pass", "pass"]);
     expect(extractLabelMock).toHaveBeenCalledTimes(2);
+  });
+  it("processes uploaded labels with no more than three simultaneous extractions", async () => {
+    let active = 0;
+    let peak = 0;
+    extractLabelMock.mockImplementation(async () => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      active -= 1;
+      return extraction;
+    });
+
+    const response = await POST(request(Array.from({ length: 4 }, (_, index) => image(`label-${index}.png`))));
+    expect(response.status).toBe(200);
+    expect(peak).toBe(3);
   });
 });

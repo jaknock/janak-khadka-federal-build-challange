@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { VISION_TIMEOUT_MS } from "@/lib/review-processing";
 import { labelExtractionSchema, type LabelExtraction } from "@/lib/types";
 
 const extractionShape = {
@@ -18,7 +19,7 @@ function getClient() {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not set. Copy .env.example to .env.local and add your key.");
   }
-  client ??= new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 4500, maxRetries: 0 });
+  client ??= new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: VISION_TIMEOUT_MS, maxRetries: 0 });
   return client;
 }
 

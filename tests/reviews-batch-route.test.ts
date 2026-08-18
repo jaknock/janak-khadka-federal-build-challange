@@ -40,4 +40,20 @@ describe("POST /api/reviews/batch", () => {
     expect(response.status).toBe(404);
     expect(extractLabelMock).not.toHaveBeenCalled();
   });
+
+  it("processes mock reviews with no more than three simultaneous extractions", async () => {
+    let active = 0;
+    let peak = 0;
+    extractLabelMock.mockImplementation(async () => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      active -= 1;
+      return extraction;
+    });
+
+    const response = await POST(request({ reviewIds: ["review-old-tom-pass", "review-stones-throw-case", "review-title-case-warning", "review-reworded-warning"] }));
+    expect(response.status).toBe(200);
+    expect(peak).toBe(3);
+  });
 });

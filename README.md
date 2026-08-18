@@ -12,10 +12,15 @@ technology stack.
 
 ## What it does
 
-- **Mock review inbox:** opens with six fictional label-review notifications sourced
+- **Mock review inbox:** opens with eight fictional label-review notifications sourced
   from a server-owned mock database.
-- **One-click batch verification:** checks every pending label with its matching
-  stored application data and bundled artwork; no browser file selection is needed.
+- **Selectable batch verification:** verifies selected or all pending labels with their
+  matching stored application data; opening an application shows a side-by-side label
+  comparison in the inbox.
+- **Human final determination:** after verification, a compliance agent can record an
+  Approve or Reject decision in that browser. It does not alter model evidence or
+  validation findings. Rejections require confirmation with an editable reason
+  pre-filled from the verification findings.
 - **Single-label upload:** accepts one label image and its application details.
 - **CSV batch upload:** pairs application rows with uploaded label images whose
   filenames match the CSV rows.
@@ -25,24 +30,31 @@ technology stack.
 - Checks the government-warning wording exactly and flags uncertain header formatting
   for human review.
 - Returns **Pass**, **Needs review**, or **Mismatch** with plain-language reasons.
-- Processes mock and uploaded batches with bounded concurrency; a failed label does
-  not prevent the remaining results from being returned.
+- Processes mock and uploaded batches with three parallel workers; a failed label
+  does not prevent the remaining results from being returned.
 
 ## Bundled samples
 
-The seeded review inbox contains six fictional labels and their application data.
-Selecting **Verify 6 labels** runs the entire pending queue. The queue is mock data,
-so refreshing the page restores its six pending notifications.
+The seeded review inbox contains eight fictional labels and their application data,
+including glare and skewed-photography scenarios. Select individual applications or
+all pending applications before verification, then open an application underneath the
+inbox to inspect it. Mock-inbox verification findings and final decisions persist in
+that browser's local storage across refreshes; they are not shared with other users.
 
 ## Design
 
 The model extracts what it sees; deterministic TypeScript code assigns the result.
 This prevents a model from silently correcting the very wording and values being
 verified. Low-confidence or visually uncertain evidence is routed to **Needs review**.
+Each result shows its server-side processing time against a five-second response
+target. The vision request can run for up to 12 seconds, with a 15-second hard safety
+timeout, so a slow but valid high-detail label extraction is returned instead of being
+discarded at the target threshold.
 
-The mock database is bundled server-side for this prototype. Verification results are
-request-scoped and the queue state is browser-only; nothing is persisted after refresh.
-There is no authentication, COLA integration, or automatic approval/rejection behavior.
+The mock database is bundled server-side for this prototype. Mock-inbox verification
+findings and decisions are saved only in the current browser's local storage. Uploaded
+labels and manual-upload results are request-scoped. There is no authentication, COLA
+integration, or automatic approval/rejection behavior.
 
 ### Regulatory scope
 
@@ -88,9 +100,10 @@ npm test
 npm run build
 ```
 
-The Vitest suite covers every bundled fixture outcome, field and warning validation,
-extraction-schema normalization, the six-record mock queue, notification endpoint,
-and batch-review request contract.
+The Vitest suite covers every bundled fixture outcome (including glare and skew),
+field and warning validation, extraction-schema normalization, the eight-record mock
+queue, notification endpoint, response-target and hard-timeout behavior, glare and
+skew fixtures, and three-worker batch concurrency.
 
 ## Deployment
 
@@ -110,3 +123,7 @@ hosting platforms and listens on port `3000`.
   from an uncalibrated label photograph.
 - Warning-header bold detection is best-effort visual evidence and is never an
   automatic rejection.
+- Three concurrent reviews are deliberate for this prototype. It is appropriate for
+  daily volume such as 1,000 labels, but not a durable high-volume job system: a
+  production implementation would add a persisted queue, provider rate-limit budget,
+  retries, and operational monitoring.
