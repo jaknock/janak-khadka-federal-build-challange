@@ -7,6 +7,8 @@ always makes the final determination.
 
 The original challenge brief is preserved in [ASSIGNMENT.md](ASSIGNMENT.md).
 See [docs/WORKFLOW.md](docs/WORKFLOW.md) for the program sequence diagrams and data flow.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the high-level architecture and
+technology stack.
 
 ## What it does
 
