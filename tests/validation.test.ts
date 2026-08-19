@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type LabelExtraction } from "@/lib/types";
 import { GOVERNMENT_WARNING, validateLabel } from "@/lib/validation";
 
-const base: LabelExtraction = { brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL", producer: null, countryOfOrigin: null, governmentWarning: GOVERNMENT_WARNING, warningHeaderText: "GOVERNMENT WARNING:", warningHeaderUppercase: true, warningHeaderBold: true, warningBodyBold: false, readable: true, confidence: .9, notes: null };
+const base: LabelExtraction = { brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL", producer: null, countryOfOrigin: null, governmentWarning: GOVERNMENT_WARNING, warningHeaderText: "GOVERNMENT WARNING:", warningHeaderUppercase: true, warningHeaderBold: true, warningBodyBold: false, readable: true, confidence: .9, imageQualityIssues: [], notes: null };
 
 describe("label validation", () => {
   it("passes a complete matching label", () => {
@@ -64,14 +64,16 @@ describe("label validation", () => {
     const result = validateLabel("wrong-abv.png", { brandName: "OLD TOM DISTILLERY", alcoholContent: "45%" }, { ...base, alcoholContent: "40% Alc./Vol. (80 Proof)" });
     expect(result.state).toBe("mismatch");
   });
-  it("routes the glare fixture to review when the warning cannot be read reliably", () => {
-    const result = validateLabel("glare-low-confidence.png", { brandName: "OLD TOM DISTILLERY", alcoholContent: "45%" }, { ...base, readable: false, confidence: .42, notes: "Glare obscures part of the health warning." });
+  it("routes the glare fixture to review and provides a reviewer-facing reason", () => {
+    const result = validateLabel("glare-low-confidence.png", { brandName: "OLD TOM DISTILLERY", alcoholContent: "45%" }, { ...base, readable: true, confidence: .95, imageQualityIssues: ["glare"], notes: "Glare obscures part of the health warning." });
     expect(result.state).toBe("needs_review");
     expect(result.findings.find((finding) => finding.field === "Image readability")?.state).toBe("needs_review");
+    expect(result.findings.find((finding) => finding.field === "Image readability")?.message).toContain("glare or reflection");
   });
-  it("routes the skewed-photo fixture to review when extraction confidence is low", () => {
-    const result = validateLabel("skewed-photo.png", { brandName: "OLD TOM DISTILLERY", alcoholContent: "45%" }, { ...base, confidence: .61, notes: "Perspective skew makes part of the label uncertain." });
+  it("routes the skewed-photo fixture to review and provides a reviewer-facing reason", () => {
+    const result = validateLabel("skewed-photo.png", { brandName: "OLD TOM DISTILLERY", alcoholContent: "45%" }, { ...base, readable: true, confidence: .95, imageQualityIssues: ["perspective_skew"], notes: "Perspective skew makes part of the label uncertain." });
     expect(result.state).toBe("needs_review");
     expect(result.findings.find((finding) => finding.field === "Image readability")?.state).toBe("needs_review");
+    expect(result.findings.find((finding) => finding.field === "Image readability")?.message).toContain("perspective skew");
   });
 });

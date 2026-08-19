@@ -8,7 +8,7 @@ describe("review queue browser storage", () => {
     expect(readPersistedReviewQueue('{"version":3}')).toEqual(emptyPersistedReviewQueue());
   });
 
-  it("accepts a persisted reviewer decision and validation result", () => {
+  it("migrates persisted results that predate image-quality evidence", () => {
     const stored = JSON.stringify({
       version: 2,
       decisions: { "review-old-tom-pass": { value: "rejected", rejectionReason: "Alcohol content does not match the submitted application." } },
@@ -28,6 +28,7 @@ describe("review queue browser storage", () => {
 
     expect(readPersistedReviewQueue(stored).decisions["review-old-tom-pass"]).toEqual({ value: "rejected", rejectionReason: "Alcohol content does not match the submitted application." });
     expect(readPersistedReviewQueue(stored).results["review-old-tom-pass"]?.result?.state).toBe("pass");
+    expect(readPersistedReviewQueue(stored).results["review-old-tom-pass"]?.result?.extraction.imageQualityIssues).toEqual([]);
   });
 
   it("migrates the earlier decision-only browser state", () => {

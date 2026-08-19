@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { extractLabel } from "@/lib/extractor";
 import { getMockReviewRecords } from "@/lib/mock-review-queue";
-import { MAX_REVIEW_CONCURRENCY, processWithLimit, runWithinTimeBudget } from "@/lib/review-processing";
+import { MOCK_INBOX_REVIEW_CONCURRENCY, processWithLimit, runWithinTimeBudget } from "@/lib/review-processing";
 import { validateLabel } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -24,11 +24,12 @@ export async function POST(request: Request) {
         const asset = await readFile(path.join(process.cwd(), "public", record.imagePath));
         const file = new File([asset], record.filename, { type: "image/png" });
         const extraction = await runWithinTimeBudget(() => extractLabel(file));
-        return { reviewId: record.id, result: validateLabel(record.filename, record.application, extraction, Math.round(performance.now() - started)) };
+        const imageQualityIssues = [...new Set([...extraction.imageQualityIssues, ...record.visualQualityIssues])];
+        return { reviewId: record.id, result: validateLabel(record.filename, record.application, { ...extraction, imageQualityIssues }, Math.round(performance.now() - started)) };
       } catch (error) {
         return { reviewId: record.id, fileName: record.filename, error: error instanceof Error ? error.message : "Analysis failed. Try again." };
       }
-    }, MAX_REVIEW_CONCURRENCY);
+    }, MOCK_INBOX_REVIEW_CONCURRENCY);
     return NextResponse.json({ results });
   } catch {
     return NextResponse.json({ error: "Could not read the review batch. Please try again." }, { status: 400 });

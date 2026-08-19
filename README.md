@@ -30,8 +30,9 @@ technology stack.
 - Checks the government-warning wording exactly and flags uncertain header formatting
   for human review.
 - Returns **Pass**, **Needs review**, or **Mismatch** with plain-language reasons.
-- Processes mock and uploaded batches with three parallel workers; a failed label
-  does not prevent the remaining results from being returned.
+- Processes all eight mock-inbox labels in parallel and uploaded batches with three
+  parallel workers; a failed label does not prevent the remaining results from being
+  returned.
 
 ## Bundled samples
 
@@ -64,6 +65,19 @@ the basic alcohol-content notation. It does not determine physical type size, co
 continuous-paragraph placement, the same-field-of-vision requirement, formula-based
 statements, or whether a country-of-origin statement is required for a particular
 import. Those remain explicit human-review decisions.
+
+## Accessibility
+
+The site is aligned with [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/)
+requirements for the reviewed inbox and determination workflow. It provides semantic
+headings, labeled controls and form fields, descriptive image alternatives, keyboard
+operation, a visible skip link and focus indicator, logical focus movement when a
+review opens or closes, live status announcements, table captions and headers, text
+status in addition to color, and compact interactive targets sized for WCAG 2.2 AA.
+
+Accessibility is reviewed as part of development with linting, automated checks, and
+manual keyboard testing. A formal conformance claim should also include browser and
+assistive-technology testing for the deployment environment.
 
 ## Local setup
 
@@ -103,7 +117,7 @@ npm run build
 The Vitest suite covers every bundled fixture outcome (including glare and skew),
 field and warning validation, extraction-schema normalization, the eight-record mock
 queue, notification endpoint, response-target and hard-timeout behavior, glare and
-skew fixtures, and three-worker batch concurrency.
+skew fixtures, eight-worker mock-inbox concurrency, and three-worker upload concurrency.
 
 ## Deployment
 
@@ -123,7 +137,6 @@ hosting platforms and listens on port `3000`.
   from an uncalibrated label photograph.
 - Warning-header bold detection is best-effort visual evidence and is never an
   automatic rejection.
-- Three concurrent reviews are deliberate for this prototype. It is appropriate for
-  daily volume such as 1,000 labels, but not a durable high-volume job system: a
-  production implementation would add a persisted queue, provider rate-limit budget,
-  retries, and operational monitoring.
+- The mock inbox runs all eight records concurrently for demo speed; uploaded batches
+  remain capped at three workers. A production implementation would add a persisted
+  queue, provider rate-limit budget, retries, and operational monitoring.

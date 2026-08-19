@@ -90,13 +90,21 @@ export function validateLabel(
     if (finding) findings.push(finding);
   }
 
-  if (!extraction.readable || extraction.confidence < 0.65) {
+  if (!extraction.readable || extraction.confidence < 0.65 || extraction.imageQualityIssues.length) {
+    const qualityIssueLabels = {
+      glare: "glare or reflection",
+      perspective_skew: "perspective skew",
+      blur: "blur",
+      cropping: "cropping",
+      obstruction: "an obstruction",
+    } as const;
+    const observedIssues = extraction.imageQualityIssues.map((issue) => qualityIssueLabels[issue]);
     findings.push({
       field: "Image readability",
       expected: null,
       extracted: null,
       state: "needs_review",
-      message: "Image quality or extraction confidence is too low for an automated recommendation.",
+      message: observedIssues.length ? `Visible ${observedIssues.join(" and ")} requires a clear, unobstructed image before a reviewer can make a final decision.` : "Image quality or extraction confidence is too low for an automated recommendation.",
     });
   }
 

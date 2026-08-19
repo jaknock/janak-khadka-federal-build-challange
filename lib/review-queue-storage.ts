@@ -54,11 +54,28 @@ export function emptyPersistedReviewQueue(): PersistedReviewQueue {
   return { version: 2, results: {}, decisions: {} };
 }
 
+function addMissingImageQualityIssues(value: unknown) {
+  if (!value || typeof value !== "object") return value;
+  const queue = value as Record<string, unknown>;
+  if (!queue.results || typeof queue.results !== "object") return value;
+
+  for (const item of Object.values(queue.results as Record<string, unknown>)) {
+    if (!item || typeof item !== "object") continue;
+    const result = (item as Record<string, unknown>).result;
+    if (!result || typeof result !== "object") continue;
+    const extraction = (result as Record<string, unknown>).extraction;
+    if (!extraction || typeof extraction !== "object" || "imageQualityIssues" in extraction) continue;
+    (extraction as Record<string, unknown>).imageQualityIssues = [];
+  }
+
+  return value;
+}
+
 export function readPersistedReviewQueue(value: string | null): PersistedReviewQueue {
   if (!value) return emptyPersistedReviewQueue();
 
   try {
-    const parsed = JSON.parse(value);
+    const parsed = addMissingImageQualityIssues(JSON.parse(value));
     const current = persistedReviewQueueSchema.safeParse(parsed);
     if (current.success) return current.data;
 

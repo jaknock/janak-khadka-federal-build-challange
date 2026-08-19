@@ -48,12 +48,12 @@ flowchart LR
    displays the evidence and saves mock-inbox results and decisions locally for that
    browser only.
 
-Batch work is intentionally limited to three concurrent image analyses in the API
-route. Each result records its server-side time against a five-second response target.
-The vision request may run for 12 seconds, with a 15-second hard timeout, so a slow
-but valid high-detail extraction is returned instead of being cut off at the target.
-A failed or timed-out image produces an individual error rather than failing the
-entire batch.
+The mock-inbox route runs all eight seeded labels concurrently for demo speed, while
+manual uploads remain limited to three concurrent image analyses. Each result records
+its server-side time against a five-second response target. The vision request may run
+for 12 seconds, with a 15-second hard timeout, so a slow but valid high-detail
+extraction is returned instead of being cut off at the target. A failed or timed-out
+image produces an individual error rather than failing the entire batch.
 
 ## Technology stack
 

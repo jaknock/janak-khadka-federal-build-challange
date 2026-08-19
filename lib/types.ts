@@ -13,6 +13,9 @@ export const expectedFieldsSchema = z.object({
 });
 export type ExpectedFields = z.infer<typeof expectedFieldsSchema>;
 
+export const imageQualityIssueSchema = z.enum(["glare", "perspective_skew", "blur", "cropping", "obstruction"]);
+export type ImageQualityIssue = z.infer<typeof imageQualityIssueSchema>;
+
 export const labelExtractionSchema = z.object({
   brandName: z.string().nullable(),
   classType: z.string().nullable(),
@@ -27,6 +30,7 @@ export const labelExtractionSchema = z.object({
   warningBodyBold: z.boolean().nullable(),
   readable: z.boolean(),
   confidence: z.number().min(0).max(1),
+  imageQualityIssues: z.array(imageQualityIssueSchema).max(5),
   notes: z.string().max(500).nullable(),
 });
 export type LabelExtraction = z.infer<typeof labelExtractionSchema>;

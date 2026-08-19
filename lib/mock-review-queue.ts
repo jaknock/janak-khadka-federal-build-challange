@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ExpectedFields } from "@/lib/types";
+import { imageQualityIssueSchema, type ExpectedFields } from "@/lib/types";
 
 export const mockReviewRecordSchema = z.object({
   id: z.string().regex(/^review-[a-z0-9-]+$/),
@@ -17,6 +17,7 @@ export const mockReviewRecordSchema = z.object({
     title: z.string().min(1),
     description: z.string().min(1),
   }),
+  visualQualityIssues: z.array(imageQualityIssueSchema).default([]),
 });
 
 export type MockReviewRecord = z.infer<typeof mockReviewRecordSchema> & { application: ExpectedFields };
@@ -70,6 +71,7 @@ const queue = [
     imagePath: "/samples/glare-low-confidence.png",
     application: { brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL" },
     notification: { title: "Old Tom Distillery — warning glare", description: "Label photograph has glare across part of the warning." },
+    visualQualityIssues: ["glare"],
   },
   {
     id: "review-skewed-photo",
@@ -77,6 +79,7 @@ const queue = [
     imagePath: "/samples/skewed-photo.png",
     application: { brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL" },
     notification: { title: "Old Tom Distillery — skewed photo", description: "Label photograph has visible perspective skew." },
+    visualQualityIssues: ["perspective_skew"],
   },
 ] as const;
 

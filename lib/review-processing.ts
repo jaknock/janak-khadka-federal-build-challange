@@ -1,4 +1,5 @@
 export const MAX_REVIEW_CONCURRENCY = 3;
+export const MOCK_INBOX_REVIEW_CONCURRENCY = 8;
 export const REVIEW_RESPONSE_TARGET_MS = 5_000;
 export const REVIEW_HARD_TIMEOUT_MS = 15_000;
 export const VISION_TIMEOUT_MS = 12_000;

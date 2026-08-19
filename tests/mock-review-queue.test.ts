@@ -10,6 +10,8 @@ describe("mock review queue", () => {
     expect(new Set(notifications.map((notification) => notification.title)).size).toBe(8);
     expect(notifications.map((notification) => notification.filename)).toContain("glare-low-confidence.png");
     expect(notifications.map((notification) => notification.filename)).toContain("skewed-photo.png");
+    expect(getMockReviewRecords(["review-glare-low-confidence"])[0]?.visualQualityIssues).toEqual(["glare"]);
+    expect(getMockReviewRecords(["review-skewed-photo"])[0]?.visualQualityIssues).toEqual(["perspective_skew"]);
   });
 
   it("only returns records requested by an exact pending-review id", () => {

@@ -8,7 +8,7 @@ import { POST } from "@/app/api/reviews/route";
 import { GOVERNMENT_WARNING } from "@/lib/validation";
 
 const extraction: LabelExtraction = {
-  brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL", producer: "Distilled and bottled by Old Tom Distillery Co., Bardstown, KY", countryOfOrigin: null, governmentWarning: GOVERNMENT_WARNING, warningHeaderText: "GOVERNMENT WARNING:", warningHeaderUppercase: true, warningHeaderBold: true, warningBodyBold: false, readable: true, confidence: .95, notes: null,
+  brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL", producer: "Distilled and bottled by Old Tom Distillery Co., Bardstown, KY", countryOfOrigin: null, governmentWarning: GOVERNMENT_WARNING, warningHeaderText: "GOVERNMENT WARNING:", warningHeaderUppercase: true, warningHeaderBold: true, warningBodyBold: false, readable: true, confidence: .95, imageQualityIssues: [], notes: null,
 };
 
 function image(name = "label.png", type = "image/png") { return new File(["fixture"], name, { type }); }

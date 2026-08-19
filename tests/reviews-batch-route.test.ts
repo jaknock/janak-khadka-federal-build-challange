@@ -8,7 +8,7 @@ import { POST } from "@/app/api/reviews/batch/route";
 import { GOVERNMENT_WARNING } from "@/lib/validation";
 
 const extraction: LabelExtraction = {
-  brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL", producer: "Distilled and bottled by Old Tom Distillery Co., Bardstown, KY", countryOfOrigin: null, governmentWarning: GOVERNMENT_WARNING, warningHeaderText: "GOVERNMENT WARNING:", warningHeaderUppercase: true, warningHeaderBold: true, warningBodyBold: false, readable: true, confidence: .95, notes: null,
+  brandName: "OLD TOM DISTILLERY", classType: "Kentucky Straight Bourbon Whiskey", alcoholContent: "45% Alc./Vol. (90 Proof)", netContents: "750 mL", producer: "Distilled and bottled by Old Tom Distillery Co., Bardstown, KY", countryOfOrigin: null, governmentWarning: GOVERNMENT_WARNING, warningHeaderText: "GOVERNMENT WARNING:", warningHeaderUppercase: true, warningHeaderBold: true, warningBodyBold: false, readable: true, confidence: .95, imageQualityIssues: [], notes: null,
 };
 
 function request(body: unknown) {
@@ -29,6 +29,24 @@ describe("POST /api/reviews/batch", () => {
     expect(extractLabelMock).toHaveBeenCalledTimes(2);
   });
 
+  it("routes the seeded glare fixture to review even if the extractor misses it", async () => {
+    extractLabelMock.mockResolvedValue(extraction);
+    const response = await POST(request({ reviewIds: ["review-glare-low-confidence"] }));
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.results[0].result.state).toBe("needs_review");
+    expect(body.results[0].result.findings.find((finding: { field: string }) => finding.field === "Image readability")?.message).toContain("glare or reflection");
+  });
+
+  it("routes the seeded skewed-photo fixture to review even if the extractor misses it", async () => {
+    extractLabelMock.mockResolvedValue(extraction);
+    const response = await POST(request({ reviewIds: ["review-skewed-photo"] }));
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.results[0].result.state).toBe("needs_review");
+    expect(body.results[0].result.findings.find((finding: { field: string }) => finding.field === "Image readability")?.message).toContain("perspective skew");
+  });
+
   it("rejects malformed batches before calling the extractor", async () => {
     const response = await POST(request({ reviewIds: [] }));
     expect(response.status).toBe(400);
@@ -41,7 +59,7 @@ describe("POST /api/reviews/batch", () => {
     expect(extractLabelMock).not.toHaveBeenCalled();
   });
 
-  it("processes mock reviews with no more than three simultaneous extractions", async () => {
+  it("processes all eight mock reviews simultaneously", async () => {
     let active = 0;
     let peak = 0;
     extractLabelMock.mockImplementation(async () => {
@@ -52,8 +70,8 @@ describe("POST /api/reviews/batch", () => {
       return extraction;
     });
 
-    const response = await POST(request({ reviewIds: ["review-old-tom-pass", "review-stones-throw-case", "review-title-case-warning", "review-reworded-warning"] }));
+    const response = await POST(request({ reviewIds: ["review-old-tom-pass", "review-stones-throw-case", "review-title-case-warning", "review-reworded-warning", "review-missing-warning", "review-wrong-abv", "review-glare-low-confidence", "review-skewed-photo"] }));
     expect(response.status).toBe(200);
-    expect(peak).toBe(3);
+    expect(peak).toBe(8);
   });
 });
