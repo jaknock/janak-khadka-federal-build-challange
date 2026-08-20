@@ -1,3 +1,8 @@
+> **Historical source brief:** This document preserves the original take-home prompt.
+> It predates the current inbox-only prototype; requests such as batch uploads are
+> background context, not supported product functionality. See [README.md](README.md)
+> for the current scope.
+
 # **Take-Home Project: AI-Powered Alcohol Label Verification App**
 
 ## **Project Background & Stakeholder Context**
