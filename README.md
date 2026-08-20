@@ -68,6 +68,7 @@ npm run build
 
 ## Further reading
 
+- [Approach, tools, and assumptions](docs/APPROACH.md)
 - [Workflow](docs/WORKFLOW.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Original challenge brief](ASSIGNMENT.md) — historical context; it is not the
